@@ -2,3 +2,104 @@
 ## window CpG +/- 250k bp, with any overlap
 ## input: replicated CpGs and all cis genes
 ## model: gene counts ~ CpG M values + age + gender + batch + center
+## performed on Cancan's mac, 12/09/2018
+
+rm(list=ls())
+# load packages
+library(biomaRt)
+library(limma)
+library(ggplot2)
+
+disease<-"asthma"
+rep<-asthma.rep # change to rhinitis and allergy
+
+setwd("~/Documents/Projects/PIAMA/Allergic diseases/eQTM_pathway/")
+
+# load data
+# matched M value and gene count data
+load("./data/exp_voom_and_methy_M_matched.Rdata")
+# position of CpGs: "anno_all.probe" include annotation for all CpGs
+load("./data/cpg_annotation.Rdata") 
+# replicated CpG names for each phenotype
+load("../data/cpgname_replication_noNA.Rdata") 
+# position of genes: "anno_rna" include annotation for all genes passed QC
+load("./data/gene_annotation_allergy_asthma_rhinitis.Rdata")
+# read phenotype of matched samples
+phenotype<-read.table("./data/phenotype_matched_brush.txt",header = T)
+pheno<-phenotype[,c("age16yrs","BGENDER","COORD","batch")]
+# extract data for one phenotype
+sig_cpg<-anno_all.probe[match(rep,anno_all.probe$IlmnID),]  
+sig_cpg$CHR<-as.numeric(as.character(sig_cpg$CHR))
+# annotation of all the genes passed QC in RNAseq
+anno_gene<-anno_rna
+
+## find cis genes
+  # set window and start and end
+  gap<- 250000
+  start<-sig_cpg$MAPINFO-gap
+  end<-sig_cpg$MAPINFO+gap
+  # prepare data frame containing cpgid,chr,annotation and position
+  anno_sig_cpg<-cbind(sig_cpg[,c("IlmnID","CHR","MAPINFO")],start,end) 
+  index<-c()
+  cpgid<-c()
+  for (i in 1:length(start))
+  {
+  cpgidi<-as.character(anno_sig_cpg[i,1])
+  chr<- anno_sig_cpg[i,2]
+  interval_low<- anno_sig_cpg[i,4]
+  interval_high<- anno_sig_cpg[i,5]
+  indexi<- which( (anno_gene$chromosome_name==chr) & (anno_gene$start_position < interval_high) & (anno_gene$end_position > interval_low))
+  repi<-length(indexi)
+  index<-c(index,indexi)
+  cpgid<-c(cpgid,rep(cpgidi,times=repi))
+  geneid<- anno_gene[index,1]
+  }
+  
+  # add position information, make a data frame of each cpg-gene pair
+  cpg_gene<-data.frame(cpgid,geneid)
+  cpg_gene$CpGpos<-sig_cpg[match(cpg_gene$cpgid,sig_cpg$IlmnID),"MAPINFO"]
+  cpg_gene$gene_start<-anno_gene[match(cpg_gene$geneid,anno_gene$ensembl_gene_id),"start_position"]
+  cpg_gene$gene_end<-anno_gene[match(cpg_gene$geneid,anno_gene$ensembl_gene_id),"end_position"]
+  
+## do eQTM
+  # prepare phenotype
+  coord<- as.factor(pheno$COORD) ## change coord form (1,2,3) to (1,2)
+  levels(coord)<- c("1","2","2")
+  pheno$COORD<- coord
+  pheno$BGENDER<-as.factor(pheno$BGENDER)
+  pheno$batch<-as.factor(pheno$batch)
+  
+  cpglevel<-levels(as.factor(cpg_gene$cpgid))
+  
+  do.twas<-function(cpgid,gene.match,M.match,pheno,ID){
+    geneid<-as.character(ID$geneid[grep(cpgid,ID$cpgid)])
+    count.gene<-gene.match[match(geneid,rownames(gene.match)),]
+    M.cpg<-M.match[grep(cpgid,rownames(M.match)),]
+    PHENO<-data.frame(M.cpg,pheno)
+    design <- model.matrix(~ ., PHENO)
+    fit<-lmFit(count.gene,design)
+    fit <- eBayes(fit)
+    results <- limma::topTable(fit, coef=2, n=Inf,sort.by = "none")
+    results$cpg<-cpgid
+    results$gene<-geneid
+    return(results)
+  }
+  
+  # output results
+  results<-data.frame()
+  for (i in 1:length(cpglevel)){
+    cpgid<-cpglevel[i]
+    resultsi<-do.twas(cpgid = cpgid,gene.match = gene.match,M.match = M.match,pheno = pheno,ID = cpg_gene)
+    results<-rbind(results,resultsi)
+  }
+  
+  # add annotation to results
+  results$hgnc_symbol<-anno_rna$hgnc_symbol[match(results$gene,anno_rna$ensembl_gene_id)]
+  results$UCSC_RefGene<-sig_cpg$UCSC_RefGene_Name[match(results$cpg,sig_cpg$IlmnID)]
+  
+  # find significant pairs passed fdr<0.05
+  sig_pair_fdr<-results[which(results$adj.P.Val<0.05),]
+  write.csv2(results,file = paste0("CpG_to_Gene_",disease,"_eqtm_replicated.csv"))
+  
+  
+  
