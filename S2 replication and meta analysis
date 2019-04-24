@@ -1,0 +1,42 @@
+## this script is to do meta analysis after receiving all replication results
+## for asthma, we have 2 replications, first meta 2 replications and then meta all studies
+## for rhinitis and allergy, we have 1 replication
+## performed on peregrine by METAL 27/06/2018
+
+# prepare data
+# results from 2 studies should be in the same format, including 4 columns: probeID, BETA, SE, P_VAL
+# put the results files in the same folder
+
+# enter METAL
+module load Metal
+metal
+
+# set method: fix effect, weighted by standard error
+SCHEME STDERR
+
+# set column names
+SEPARATOR  WHITESPACE
+MARKER   probeID
+EFFECT   BETA
+STDERR   SE
+PVAL     P_VAL
+
+# set input files
+PROCESS /allergy_discovery.txt
+PROCESS /allergy_EVAPR.txt
+
+# set output file name
+OUTFILE META_allergy .tbl
+
+# carry out analysis
+ANALYZE
+
+## for asthma, first meta two replication results, and then meta all the results by process 3 files
+
+## clear the space before doing next analysis
+CLEAR
+
+## or quit
+QUIT
+
+
