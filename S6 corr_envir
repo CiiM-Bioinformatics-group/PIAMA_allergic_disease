@@ -1,0 +1,16 @@
+## this script is to summary the results of the association of allery-associated CpGs with environmental factors
+## EWAS of envrionmental factors were already done and were on the peregrine
+## we mainly focus on environmental factors of secondary school, and looked into time window if we found significant CpG
+## also did resampling of pets to confirm the direction is not random finding
+
+## results of EWAS: peregrine folder: /data/p282473/PIAMA_envir/
+## results of moulds: ./mould_pets/results/time_window_secondary_school/PIAMA_16_mould_brush_addSV_tw.gz
+## results of pets: ./mould_pets/results/time_window_secondary_school/PIAMA_16_pet_brush_addSV_tw.gz
+## results of active smoking: ./smoking/brush_noedu/PIAMA_16_Smoke16_brush_addSV_noedu.gz
+## results of passive smoking: ./smoking/brush_noedu/PIAMA_16_PaS_brush_addSV_noedu_evernever.gz
+
+## extract the results of 60 CpGs associated with allergy from listed results above.
+
+## Check the significant CpG associated with pets in different time window
+
+
