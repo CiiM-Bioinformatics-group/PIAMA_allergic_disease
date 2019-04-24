@@ -101,5 +101,9 @@ anno_gene<-anno_rna
   sig_pair_fdr<-results[which(results$adj.P.Val<0.05),]
   write.csv2(results,file = paste0("CpG_to_Gene_",disease,"_eqtm_replicated.csv"))
   
+  ## pathway analysis
+  # use http://cpdb.molgen.mpg.de/ 
+  # the input is eqtm genes identified to be associated with replicated CpGs
+  
   
   
