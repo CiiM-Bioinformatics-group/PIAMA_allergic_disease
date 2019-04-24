@@ -1,0 +1,54 @@
+## this script is to do EWAS
+## logistic regression model: allergy/asthma/rhinitis ~ trimmed M values + age + gender + batch + center + SVs
+## performed on peregrine 19/02/2018
+
+rm(list=ls())
+
+# load libraries
+library(foreign)
+library(data.table)# to process results
+library(MASS) # rlm function for robust linear regression
+library(sandwich) # estimation of the standard error
+library(lmtest) # to use coeftest
+library(parallel) # to use multicore approach - part of base R
+library(R.utils)
+library(matrixStats)
+library(plyr) 
+
+filename<- "PIAMA_16_allergy_brush_sva_model2_be"
+setwd("/home/p282473/projects/PIAMA/")
+
+# prepare phenotype data and M matrix
+load ("./data/PIAMA_brush_trimmed_M.Rdata")
+setwd("./SVA_on_trimed_M/be/")
+load("./find_SVs/sva_M_brush_allergy_be.Rdata")
+samplename<-rownames(modSv1)
+M_matrix<-t(M.brush2[,samplename])
+PHENO<-modSv1
+
+# logistic regression model
+GLMtest = function(meth_matrix,methcol,Y, X1, X2, X3, X4, S1,S2,S3,S4,S5) {
+  mod = glm(Y~meth_matrix[, methcol] +X1+X2+X3+X4+S1+S2+S3+S4+S5,family = "binomial")
+  cf = summary(mod)$coefficients
+  cf[2, c("Estimate", "Std. Error", "Pr(>|z|)")]  
+}
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(M_matrix)), dimnames(M_matrix)[[2]]), GLMtest, meth_matrix=M_matrix, Y=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4<- PHENO[,5],S1<-PHENO[,6],S2<-PHENO[,7],S3<-PHENO[,8],S4<-PHENO[,9],S5<-PHENO[,10]))
+
+# summary results
+all.results<-ldply(ind.res,rbind)
+names(all.results)<-c("probeID","BETA","SE", "P_VAL")
+
+# add sample size for each probe
+M_matrix<-t(M_matrix)
+all.results<-all.results[match(rownames(M_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(M_matrix))
+
+# calculate lambda value
+median(qchisq(as.numeric(as.character(all.results$P_VAL)),df=1,lower.tail = F),na.rm = T)/qchisq(0.5,1)
+
+# save results
+write.table(all.results, filename,na="NA")
+gzip(filename)
+
+
