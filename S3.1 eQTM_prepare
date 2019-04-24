@@ -1,0 +1,32 @@
+## prepare data for eQTM analysis
+## read and match methylation M values and voomed read counts from RNAseq
+
+## match samples and save 
+# load M values of replicated CpGs
+load("../prediction/data/M_value_top_cpgs.Rdata")
+
+# load expression data after normalization
+load("./data/PIAMA_expression_voom.Rdata")
+
+# match samples
+colnames(data.piama)<-substring(colnames(data.piama),2,9)
+colnames(data.piama)<-paste0(colnames(data.piama),"_brush")
+index<-match(colnames(data.piama),colnames(M.cpg))
+M.match<-M.cpg[,na.omit(index)]
+gene.match<-data.piama[,match(colnames(M.match),colnames(data.piama))]
+
+# match with phenotype
+phenotype<-read.csv("../data/Phenotype_brush16_PIAMA_add_allergy.csv")
+pheno<-phenotype[match(colnames(M.match),phenotype$Sample),]
+pheno<-pheno[,c("Sample","age16yrs","BGENDER","COORD","batch","asthma16","rhinitis16","allergy")]
+pheno<-na.omit(pheno)
+rownames(pheno)<-pheno$Sample
+pheno<-pheno[,-1]
+pheno$BGENDER<-as.factor(pheno$BGENDER)
+pheno$batch<-as.factor(pheno$batch)
+M.match<-M.match[,match(rownames(pheno),colnames(M.match))]
+gene.match<-gene.match[,match(rownames(pheno),colnames(gene.match))]
+
+# save matched M values and gene expression data
+save(M.match,gene.match,file = "./data/exp_voom_and_methy_M_matched.Rdata")
+write.table(pheno,file = "./data/phenotype_matched_brush.txt")
