@@ -1,0 +1,4 @@
+## this script is to cis-eQTM analysis for replicated CpGs
+## window CpG +/- 250k bp, with any overlap
+## input: replicated CpGs and all cis genes
+## model: gene counts ~ CpG M values + age + gender + batch + center
