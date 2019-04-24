@@ -1,7 +1,9 @@
 ## This script is to do single cell analysis on independent data with 2 asthma patients and 2 healthy controls
 ## 1.QC and remove doublet(doubletFinder) on each sample
 ## 2.run CCA analysis to reduce donor effect
-## Cancan Qi Nov_19 2018
+## the final results can be found in the peregrine: "/data/p282473/scRNAseq/Remove_doublet"
+## or in Cancan's mac: "~/Documents/Projects/PIAMA/Nasal_Brushes/CCA2/Remove_doublet/final_results/"
+## performed on peregrine, Nov_19 2018
 
 rm(list=ls())
 
