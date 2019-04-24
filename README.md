@@ -11,7 +11,7 @@ S1. EWAS of asthma, rhinitis and allergic disease;
 
 S2. meta analysis of discovery and replication;
 
-S3. eQTM analysis of replicated CpGs, and pathway analysi;
+S3. eQTM analysis of replicated CpGs, and pathway analysis;
 
 S4. prediction of allergic disease;
 
