@@ -1,0 +1,92 @@
+## this script is for prediction of allergy by GLMNET
+## input: significant CpGs identified in PIAMA (exclude those CpGs that didn't pass QC in EVA-PR)
+## performed on peregrine, 26/06/2018
+
+rm(list=ls())
+
+# load packages
+library(pROC)
+library(caret)
+library(glmnet)
+#library(gbm)
+#library(randomForest)
+
+setwd("/home/p282473/projects/PIAMA/allergy_prediction")
+
+# read CpG list of each phenotype
+options(stringsAsFactors = FALSE)
+cpgname<- read.table("./data/PIAMA_brush_allergy_sig.txt",header=T)$probeID # change it to asthma or rhinitis
+
+# load data
+load ("./data/M_value_top_cpgs.Rdata")
+cpg.data<- M.cpg[as.character(cpgname),]
+
+# read phenotype data (for age and sex)
+phenotype<- read.csv("./data/Phenotype_brush16_PIAMA_add_allergy.csv")
+phenotype$Sample<-gsub("_duplo","",phenotype$Sample)
+samplename<- phenotype$Sample
+colnames(phenotype)[9]<-"sex"
+colnames(phenotype)[12]<-"age"
+phenotype$sex[which(phenotype$sex==2)]<-0 ## 0 for boy and 1 for girl
+
+x<- data.frame(t(cpg.data[,samplename]),phenotype[,c("age","sex")])
+y<- phenotype$allergy
+y[y==0] = "no"
+y[y==1] = "yes"
+y <- as.factor(y)
+
+# split data in training & validation set (70% training and 30% testing)
+set.seed(1)
+splitSample <- createDataPartition(y, p = 0.7, list = FALSE)
+training_expression <- x[splitSample,]
+training_phenotype <- y[splitSample]
+validation_expression <- x[-splitSample,]
+validation_phenotype <- y[-splitSample]
+
+# set a series of alpha and lambda
+netGrid <- expand.grid(.alpha=seq(0.1,0.9, by=0.1),.lambda=seq(0,1,by=0.01))  
+# set cross validation, 10 folds repeat 5 times
+netctrl <- trainControl(verboseIter=TRUE, classProbs=TRUE, summaryFunction=twoClassSummary, method="repeatedcv", number=10, repeats=5) 
+
+# train the model
+set.seed(1)
+netFit <- train(x = training_expression, y = training_phenotype,method = "glmnet", metric = "ROC", tuneGrid=netGrid,trControl = netctrl,preProcess = "scale")
+netFitPerf <- getTrainPerf(netFit) 
+trainROC <- netFitPerf[,1]
+trainSens <- netFitPerf[,2]
+trainSpec <- netFitPerf[,3] 
+trainAlpha <- netFit$bestTune[,1]
+trainLambda <- netFit$bestTune[,2]
+print(sprintf("ROC: %s Sens: %s Spec: %s Alpha: %s Lambda: %s", round(trainROC,2), round(trainSens,2), round(trainSpec,2), round(trainAlpha,2),round(trainLambda,2))) 
+
+predict_validation <- predict(netFit, newdata = validation_expression)
+table.glmnet<-confusionMatrix(predict_validation,validation_phenotype)
+
+# get finnal model
+my.glmnet.model<- netFit$finalModel
+my.glmnet.coef<-coef(my.glmnet.model,s=netFit$bestTune$lambda)
+
+# best tune 
+netFit$bestTune
+
+# internal validation
+new.prob <-  predict(object = netFit, newdata = validation_expression, type = 'prob')[[2]]
+new.raw <- as.character(predict(object = netFit, newdata = validation_expression, type = 'raw'))
+roc.glmnet.new <- roc(validation_phenotype, new.prob)
+
+# ROC plot of discovery results
+setwd("./allergy")
+pdf('Figure_prediction_methylation_ROC_allergy.pdf', width = 5, height = 5)
+plot(roc.glmnet.new, col = 'blue', main = "ROC Curve and AUC for Discovery Data")
+legend('bottomright', paste('AUC of allergy,',round(roc.glmnet.new$auc,3)),col = 'blue', lty = 1)
+dev.off()
+
+# save model
+save(table.glmnet,file="prediction_allergy_confusiontable.Rdata")
+save(netFit,file="prediction_allergy_model.Rdata")
+save(roc.glmnet.new,file="prediction_allergy_roc.Rdata")
+write.csv2(my.glmnet.coef,file = "coef_allergy.csv")
+
+
+
+
