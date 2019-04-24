@@ -1,0 +1,47 @@
+## this script is togenerate SVs, which should be added to regression model
+## performed on peregrine, 18/02/2018
+
+rm(list=ls())
+
+# load packages
+library(sva)
+library(MASS)
+library(compare)
+library(tableone)
+library(matrixStats)
+
+# prepare phenotype
+setwd("/home/p282473/projects/PIAMA/")
+phenotype<- read.csv("./phenotype/Phenotype_brush16_PIAMA_add_allergy.csv")
+phenotype$Sample<-gsub("_duplo","",phenotype$Sample)
+samplename<- as.character(phenotype$Sample)
+load ("./data/PIAMA_brush_trimmed_M.Rdata")
+M_matrix<- M.brush2[,samplename]
+
+PHENO<- phenotype[,c("allergy","batch","COORD","BGENDER","age16yrs")]
+PHENO<- droplevels(PHENO) ; rownames(PHENO)<- phenotype[,"Sample"]
+coord<- as.factor(PHENO$COORD) ## change coord form (1,2,3) to (1,2)
+levels(coord)<- c("1","2","2")
+PHENO$COORD<- coord
+PHENO$BGENDER<-as.factor(PHENO$BGENDER)
+PHENO$batch<-as.factor(PHENO$batch)
+
+# replace NA in M matrix with the median of the row
+k = which(is.na(M_matrix), arr.ind=TRUE)
+M_matrix[k] = rowMedians(M_matrix, na.rm=TRUE)[k[,1]]
+
+# calculate SVs by method "be"
+mod1<-model.matrix(~.,PHENO)
+mod0<-model.matrix(~.,PHENO[,-1])
+n.sv <- num.sv(dat =M_matrix, mod = mod1, method = "be", vfilter = 2000, B = 1000, seed =1)
+svobj1= sva(M_matrix,mod1,mod0,n.sv=n.sv)
+SVs = as.data.frame(svobj1$sv)
+colnames(SVs) <-paste0("sv",1:ncol(SVs))
+modSv1 = cbind(PHENO,SVs)
+
+# save phenotypes and SVs
+setwd("./SVA_on_trimed_M/be/find_SVs")
+save(modSv1,file = "./sva_M_brush_allergy_be.Rdata")
+
+
+
