@@ -14,3 +14,16 @@ for (i in 1:length(all.rep))
   p<-c(p,pi)
 }
 
+# plot distribution of each probe
+
+for (i in 1:length(all.rep))
+{
+  cpgi<-all.rep[i]
+  betai<-beta_matrix[grep(cpgi,rownames(beta_matrix)),]
+  di<-density(betai)
+  filenamei<-paste0(cpgi,"_probe_distribution_brush.png")
+  png(filename = filenamei)
+  plot(di,main = cpgi)
+  rug(betai)
+  dev.off()
+}
