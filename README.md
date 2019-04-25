@@ -31,4 +31,4 @@ P2. Boxplot of important CpGs; Boxplot of different time windows;
 
 P3. Venn diagram of 3 phenotypes;
 
-P4. ROC curve.
+P4. Ohter useful plots.
