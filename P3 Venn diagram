@@ -1,0 +1,11 @@
+## this script is to make venn diagram for asthma, rhinitis and IgE
+
+library(VennDiagram)
+
+pheno<-read.csv("~/Documents/Projects/PIAMA/Allergic diseases/IgE_sensitivity/data/PIAMA_pheno_brush_addIgE.csv")
+asthma<-as.character(pheno$Sample[which(pheno$asthma16==1)])
+rhinitis<-as.character(pheno$Sample[which(pheno$rhinitis16==1)])
+IgE<-as.character(pheno$Sample[which(pheno$atopy==1)])
+
+venn.diagram(list(Asthma=asthma,IgE=IgE,Rhinitis=rhinitis), fill=c("red","green","blue"), alpha=c(0.5,0.5,0.5), cex=2, filename="overlapwithIgE.tiff")
+
