@@ -89,6 +89,36 @@ cd ./cpv/  ### change the path, otherwise it will be error
 # settings referred to PACE asthma paper
 comb-p pipeline -c 4 --seed 0.05 --dist 1000 --prefix Maki --region-filter-p 0.05 --region-filter-n 2 --annotate hg19 ~/Documents/Projects/Maki/850K/DMR/input_Maki_linear_notwin.bed
 
+# the results are in the file *anno.hg19.bed, rename the cols using R
+combp<-read.table("./DMR/comb-p_linear/Maki.anno.hg19.bed",header = FALSE, sep="\t",stringsAsFactors=FALSE, quote="")
+colnames(combp)<-c("chrom","start","end","min_p","n_probes","slk_p","slk_sidak_p","t.pos/t.neg","t.sum","refGene_name","refGene_distance","refGene_feature","cpgIslandExt_name","cpgIslandExt_distance","cpgIslandExt_feature")
+write.csv2(combp,file="./DMR/comb-p_linear/Maki_DMR_combp_notwin.csv",row.names = F)
+
+
+#############################  combine the results from two method  ############################
+combp$chrom<-gsub("chr","",combp$chrom)
+combp$chrom<-as.numeric(combp$chrom)
+results.ranges$seqnames<-gsub("chr","",results.ranges$seqnames)
+results.ranges$seqnames<-as.numeric(results.ranges$seqnames)
+results.ranges$end_1<-results.ranges$end+1
+index1<-match(combp$start,results.ranges$start)
+index2<-match(combp$end,results.ranges$end_1)
+index.ol<-intersect(na.omit(index1),na.omit(index2))
+ol.cate<-results.ranges[index.ol,]
+ol.cate<-ol.cate[order(ol.cate$seqnames),]
+ol.cate<-ol.cate[,c("seqnames","start","end","width","no.cpgs","minfdr","overlapping.promoters")]
+colnames(ol.cate)<-c("chr","start.cate","end.cate","width.cate","no.cate","minfdr.cate","overlapping.promoters")
+
+index1<-match(results.ranges$start,combp$start)
+index2<-match(results.ranges$end_1,combp$end)
+index.ol<-intersect(na.omit(index1),na.omit(index2))
+ol.combp<-combp[index.ol,]
+ol.combp<-ol.combp[order(ol.combp$chrom),]
+ol.combp<-ol.combp[,c("start","end","n_probes","slk_p","slk_sidak_p","refGene_name","refGene_feature","cpgIslandExt_feature")]
+colnames(ol.combp)<-c("start.combp","end.combp","no.combp","slk_p","slk_sidak_p","refGene_name","refGene_feature","cpgIslandExt_feature")
+
+dmr<-cbind(ol.cate,ol.combp)
+write.csv2(dmr,file = "DMR/summary_dmr_two_methods.csv",row.names = F)
 
 
 
