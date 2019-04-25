@@ -1,0 +1,79 @@
+## this script is to do stratified analysis according to IgE status on replicated genes
+## the controls are no-disease and IgE- samples
+## performed on Cancan's mac, 10/01/2019
+
+rm(list=ls())
+
+#libraries
+library(foreign)
+library(data.table)# to process results
+library(MASS) # rlm function for robust linear regression
+library(sandwich) # estimation of the standard error
+library(lmtest) # to use coeftest
+library(parallel) # to use multicore approach - part of base R
+library(R.utils)
+library(matrixStats)
+library(plyr)
+library(sva)
+
+# read phenotype and M values
+setwd("~/Documents/Projects/PIAMA/Allergic diseases/IgE_sensitivity/")
+load("./data/trimedM_top_cpgs.Rdata")
+pheno<-read.csv("./data/PIAMA_pheno_brush_addIgE.csv")
+load("../data/cpgname_replication_noNA.Rdata")
+M.topsite<-tM.top[match(allergy.rep,rownames(tM.top)),]
+
+################################## IgE+ ###################################
+# function for logistic regression model
+GLMtest = function(meth_matrix,methcol,Y, X1, X2, X3, X4,S1,S2) {
+  mod = glm(Y~meth_matrix[, methcol] +X1+X2+X3+X4+S1+S2,family = "binomial")
+  cf = summary(mod)$coefficients
+  cf[2, c("Estimate", "Std. Error", "Pr(>|z|)")]  
+}
+
+# SVA 
+load("./data/sva_IgE1_allergy.Rdata")
+PHENO<-modSv1
+M.IgE1<-M.topsite[,match(rownames(PHENO),colnames(M.topsite))]
+M.matrix<-t(M.IgE1)
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(M.matrix)), dimnames(M.matrix)[[2]]), GLMtest, meth_matrix=M.matrix, Y=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4<- PHENO[,5],S1<- PHENO[,6],S2<- PHENO[,7]))
+
+all.results<-ldply(ind.res,rbind)
+names(all.results)<-c("probeID","BETA","SE", "P_VAL")
+
+M.matrix<-t(M.matrix)
+all.results<-all.results[match(rownames(M.matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(M.matrix))
+
+#write.table(all.results,file = "PIAMA_brush_allergy_IgE1.txt",row.names = F)
+write.csv2(all.results,file = "PIAMA_brush_allergy_IgE1.csv",row.names = F)
+
+rm(modSv1,PHENO,M.matrix)
+
+################################## IgE- ###################################
+# function for logistic regression model
+GLMtest = function(meth_matrix,methcol,Y, X1, X2, X3, X4,S1) {
+  mod = glm(Y~meth_matrix[, methcol] +X1+X2+X3+X4+S1,family = "binomial")
+  cf = summary(mod)$coefficients
+  cf[2, c("Estimate", "Std. Error", "Pr(>|z|)")]  
+}
+# SVA 
+load("./data/sva_IgE0_allergy.Rdata")
+PHENO<-modSv1
+M.IgE0<-M.topsite[,match(rownames(PHENO),colnames(M.topsite))]
+M.matrix<-t(M.IgE0)
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(M.matrix)), dimnames(M.matrix)[[2]]), GLMtest, meth_matrix=M.matrix, Y=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4<- PHENO[,5],S1<- PHENO[,6]))
+
+all.results<-ldply(ind.res,rbind)
+names(all.results)<-c("probeID","BETA","SE", "P_VAL")
+
+M.matrix<-t(M.matrix)
+all.results<-all.results[match(rownames(M.matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(M.matrix))
+
+#write.table(all.results,file = "PIAMA_brush_allergy_IgE0.txt",row.names = F)
+write.csv2(all.results,file = "PIAMA_brush_allergy_IgE0.csv",row.names = F)
+
+
