@@ -1,0 +1,95 @@
+## two methods DMRcate and combp were used to do DMR analysis, and region that significant
+## the input is summary statistics of EWAS
+## performed on Cancan's mac, 16/03/2018
+
+################################  DNRcate  ###############################################
+library(DMRcate)
+
+setwd("~/Documents/Projects/PIAMA/Allergic diseases/")
+
+# load annotataion files including region information
+load("../annotation_DMR.Rdata") 
+annotdata$CHR<-paste0("chr",annotdata$CHR)
+annotdata<-annotdata[-which(annotdata$CHR %in% c("chrY","chrX")),]
+
+# read summary statistics of EWAS
+inputfile <- read.table("./SVA_on_trimmed_M/be/PIAMA_16_allergy_brush_sva_model2_be.gz")
+# inputfile <- read.table("./SVA_on_trimmed_M/be/PIAMA_16_asthma_brush_sva_model2_be.gz")
+# inputfile <- read.table("./SVA_on_trimmed_M/be/PIAMA_16_rhinitis_brush_sva_model2_be.gz")
+inputfile<-inputfile[,-5]
+colnames(inputfile)<-c("CpGID","coef","se","pvalue")
+rownames(inputfile)<-inputfile$CpGID
+
+# reformat the data frame
+inputfileBed<-data.frame(merge(inputfile,annotdata,by="row.names"))
+inputfileBed$pos<-as.integer(inputfileBed$MAPINFO)
+inputfileBed$stat<-inputfileBed$coef/inputfileBed$se
+inputfileBed$CpGID<-as.character(inputfileBed$CpGID)
+inputfileBed$CHR<-as.character(inputfileBed$CHR)
+inputfileBed$indfdr<-p.adjust(inputfileBed$pvalue, "BH")
+inputfileBed$is.sig<-"FALSE"
+inputfileBed$is.sig<-replace(inputfileBed$is.sig,inputfileBed$indfdr<0.05,"TRUE")
+inputfileBed<-inputfileBed[,c("CpGID","stat","CHR","pos","coef","indfdr","is.sig")]
+inputfileBed<-inputfileBed[complete.cases(inputfileBed),]
+inputfileBed<-inputfileBed[order(inputfileBed$CHR,inputfileBed$pos),]
+
+colnames(inputfileBed)<-c("ID","stat","CHR","pos","betafc","indfdr","is.sig")
+
+# DMR using DMAcate
+datainput<-inputfileBed
+class(datainput) <- "annot"
+# * settings referred to PACE asthma paper
+dmrcoutput <- dmrcate(datainput, lambda=1000, C=2,pcutoff=0.01,min.cpgs=2)
+results.ranges <- data.frame(extractRanges(dmrcoutput, genome = "hg19"))
+
+# save the results
+write.table(results.ranges,file="./DMR/DMRcate_region_list(hg19)_allergy.txt",row.names = F)
+# write.table(results.ranges,file="./DMR/DMRcate_region_list(hg19)_asthma.txt",row.names = F)
+# write.table(results.ranges,file="./DMR/DMRcate_region_list(hg19)_rhinitis.txt",row.names = F)
+
+
+################################  combp  ###############################################
+# --- first transfer the data into .bed format using R ---
+
+library(minfi)
+library(gtools)
+
+setwd("/Users/cancanqi/Documents/Projects/PIAMA/Allergic diseases")
+# Annatation data file illumina
+load("../annotation_DMR.Rdata")
+colnames(annotdata)<-c("CHR","MAPINFO","Gene","Island")
+annotdata$CHR<-paste0("chr",annotdata$CHR)
+annotdata<-annotdata[-which(annotdata$CHR %in%c("chrY","chrX")),]
+
+# input EWAS file
+inputfile <- read.table("./SVA_on_trimmed_M/be/PIAMA_16_allergy_brush_sva_model2_be.gz") ## 
+inputfile<-inputfile[,-5]
+colnames(inputfile)<-c("CpGID","coef","se","pvalue")
+rownames(inputfile)<-inputfile$CpGID
+
+inputfileBed<-data.frame(merge(inputfile,annotdata,by="row.names"))
+inputfileBed$start<-as.integer(inputfileBed$MAPINFO)
+inputfileBed$end<-as.integer(inputfileBed$MAPINFO+1)
+inputfileBed$t<-inputfileBed$coef/inputfileBed$se
+inputfileBed$CpGID<-as.character(inputfileBed$CpGID)
+inputfileBed$CHR<-as.character(inputfileBed$CHR)
+inputfileBed<-inputfileBed[,c("CHR","start","end","pvalue","t","CpGID")]
+inputfileBed<-inputfileBed[complete.cases(inputfileBed),]
+inputfileBed<-inputfileBed[order(inputfileBed$CHR,inputfileBed$start),]
+
+colnames(inputfileBed)<-c("#chrom","start","end","pvalue","t","ID")
+
+# save the file as .bed
+file<-"filename.bed"
+write.table(inputfileBed, file =file,col.names = TRUE, row.names = FALSE,sep = "\t",append=FALSE,quote =FALSE)
+
+# --- then perform combp using python ---
+cd Documents/software/combined-pvalues-master/ ### go to the folder you download comb-p from(https://github.com/brentp/combined-pvalues)
+cd ./cpv/  ### change the path, otherwise it will be error
+# settings referred to PACE asthma paper
+comb-p pipeline -c 4 --seed 0.05 --dist 1000 --prefix Maki --region-filter-p 0.05 --region-filter-n 2 --annotate hg19 ~/Documents/Projects/Maki/850K/DMR/input_Maki_linear_notwin.bed
+
+
+
+
+
