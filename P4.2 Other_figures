@@ -1,0 +1,46 @@
+## here are figures that maybe useful
+
+################################# volcano plot #################################
+
+library(ggplot2)
+
+# read results and add fdr first
+results$threshold<-1
+results$threshold[which(results$BETA>0 & results$FDR<0.05)]<-2
+results$threshold[which(results$BETA<0 & results$FDR<0.05)]<-3
+results$threshold<-as.factor(results$threshold)
+
+pdf(file = "volcano_brush_allergy.pdf",width=6, height=6)
+ggplot(data=results,
+       aes(x = results$BETA, y= -log10(results$P_VAL)))+
+  geom_point(alpha=0.4, size=1.2,colour=results$threshold)+
+  geom_hline(yintercept = fdr,lty=4,col="gray",lwd=0.6)+
+  xlim(c(-4,4))+
+  xlab("Effect size")+ylab("-log10 (p-value)") + 
+  theme(axis.line = element_line(colour = "black"), panel.border = element_rect(colour = "black",fill = NA), panel.grid.minor = element_blank(),panel.background = element_blank())+
+  labs(title="Volcano Plot of Rhinitis in Brush")
+dev.off()
+
+################################# bar plot (example code) #################################
+
+library(ggplot2)
+
+# create a dataset
+specie=c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
+condition=rep(c("normal" , "stress" , "Nitrogen") , 4)
+value=abs(rnorm(12 , 0 , 15))
+data=data.frame(specie,condition,value)
+
+# Grouped barplot
+ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+  geom_bar(position="dodge", stat="identity")
+
+# Stacked barplot
+ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+  geom_bar( stat="identity")
+
+# Stacked Percent barplot
+ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+  geom_bar( stat="identity", position="fill")
+
+
