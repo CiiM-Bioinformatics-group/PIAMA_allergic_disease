@@ -11,6 +11,177 @@
 
 ## extract the results of 60 CpGs associated with allergy from listed results above.
 
-## Check the significant CpG associated with pets in different time window
+## pets results resampling, to confirm the consistenet direction is not random finding
+setwd("~/Documents/Projects/PIAMA/")
+results<-read.table("./Exposures/mould_pets/pets/PIAMA_16_pet_brush_group.gz")
 
+###################################################################################
+
+# 1000 times resampling and sum the number of positive association (effect size>0)
+pos_num<-c()
+for (i in 1:1000){
+  n1<-sample(as.character(results$probeID),size = 60)
+  result1<-results[match(n1,results$probeID),]
+  result1$direction<-1
+  result1$direction[which(result1$BETA<0)]<-0
+  pos_num[i]<-sum(result1$direction)
+}
+
+# distribution of number of positive association
+hist(pos_num)
+
+###################################################################################
+
+## Check the significant CpG associated with pets in different time window
+## y: methylation trimmed M values; x: 4 time windows; 
+## SVs were generated on the whole dataset, data saved on peregrine (/data/p282473/PIAMA_envir/mould_pets/pets_4time_window)
+## performed on Cancan's mac, 30/01/2019
+
+rm(list=ls())
+
+# load packages
+library(data.table)
+library(MASS) 
+library(sandwich) 
+library(lmtest) 
+library(parallel)
+library(R.utils)
+
+# load M values of top CpGs
+setwd("~/Documents/Projects/PIAMA/")
+load("./data/M_value_top_cpgs.Rdata")
+load("Allergic diseases/data/cpgname_replication_noNA.Rdata")
+M.allergy<-M.cpg[match(allergy.rep,rownames(M.cpg)),]
+
+setwd("./Allergic diseases/allergic_top_sites_with_environment/pets/4_time_windows/")
+
+## ---- infancy ------------------------------------
+load("sva_pets_infancy.Rdata")
+PHENO<-modSv1
+samplename<-rownames(PHENO) ## 388 samples
+beta_matrix<- t(M.allergy[,samplename])
+
+RLMtest = function(meth_matrix,methcol,pet , X1, X2, X3,X4,S1,S2,S3,S4) {
+  mod = rlm(meth_matrix[, methcol] ~ pet +X1+X2+X3+X4+S1+S2+S3+S4,maxit=200)
+  cf = try(coeftest(mod, vcov=vcovHC(mod, type="HC0"))) 
+  if (class(cf)=="try-error") {
+    bad <- as.numeric(rep(NA, 3))
+    names(bad)<- c("Estimate", "Std. Error", "Pr(>|z|)")
+    bad
+  }
+  else cf[2, c("Estimate", "Std. Error", "Pr(>|z|)")]   
+}
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(beta_matrix)), dimnames(beta_matrix)[[2]]), RLMtest, meth_matrix=beta_matrix, pet=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4=PHENO[,5],S1=PHENO[,6],S2=PHENO[,7],S3=PHENO[,8],S4=PHENO[,9]))
+
+setattr(ind.res, 'class', 'data.frame')
+setattr(ind.res, "row.names", c(NA_integer_,4))
+setattr(ind.res, "names", make.names(names(ind.res), unique=TRUE))
+probelistnames <- names(ind.res)
+all.results <- t(data.table(ind.res))
+all.results<-data.table(all.results)
+all.results[, probeID := probelistnames]
+setnames(all.results, c("BETA","SE", "P_VAL", "probeID")) # rename columns
+setcolorder(all.results, c("probeID","BETA","SE", "P_VAL"))
+rm(probelistnames, ind.res)
+
+beta_matrix<-t(beta_matrix)
+all.results<-all.results[match(rownames(beta_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(beta_matrix))
+
+all.results<-all.results[order(all.results$P_VAL),]
+
+r.infancy<-all.results
+rm(PHENO,modSv1,beta_matrix,all.results)
+
+## ---- pre school ------------------------------------
+load("sva_pets_preschool.Rdata")
+PHENO<-modSv1
+samplename<-rownames(PHENO) ## 388 samples
+beta_matrix<- t(M.allergy[,samplename])
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(beta_matrix)), dimnames(beta_matrix)[[2]]), RLMtest, meth_matrix=beta_matrix, pet=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4=PHENO[,5],S1=PHENO[,6],S2=PHENO[,7],S3=PHENO[,8],S4=PHENO[,9]))
+
+setattr(ind.res, 'class', 'data.frame')
+setattr(ind.res, "row.names", c(NA_integer_,4))
+setattr(ind.res, "names", make.names(names(ind.res), unique=TRUE))
+probelistnames <- names(ind.res)
+all.results <- t(data.table(ind.res))
+all.results<-data.table(all.results)
+all.results[, probeID := probelistnames]
+setnames(all.results, c("BETA","SE", "P_VAL", "probeID")) # rename columns
+setcolorder(all.results, c("probeID","BETA","SE", "P_VAL"))
+rm(probelistnames, ind.res)
+
+beta_matrix<-t(beta_matrix)
+all.results<-all.results[match(rownames(beta_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(beta_matrix))
+
+all.results<-all.results[order(all.results$P_VAL),]
+
+r.preschool<-all.results
+rm(PHENO,modSv1,beta_matrix,all.results)
+
+## ---- pri school ------------------------------------
+load("sva_pets_primary.Rdata")
+PHENO<-modSv1
+samplename<-rownames(PHENO) ## 388 samples
+beta_matrix<- t(M.allergy[,samplename])
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(beta_matrix)), dimnames(beta_matrix)[[2]]), RLMtest, meth_matrix=beta_matrix, pet=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4=PHENO[,5],S1=PHENO[,6],S2=PHENO[,7],S3=PHENO[,8],S4=PHENO[,9]))
+
+setattr(ind.res, 'class', 'data.frame')
+setattr(ind.res, "row.names", c(NA_integer_,4))
+setattr(ind.res, "names", make.names(names(ind.res), unique=TRUE))
+probelistnames <- names(ind.res)
+all.results <- t(data.table(ind.res))
+all.results<-data.table(all.results)
+all.results[, probeID := probelistnames]
+setnames(all.results, c("BETA","SE", "P_VAL", "probeID")) # rename columns
+setcolorder(all.results, c("probeID","BETA","SE", "P_VAL"))
+rm(probelistnames, ind.res)
+
+beta_matrix<-t(beta_matrix)
+all.results<-all.results[match(rownames(beta_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(beta_matrix))
+
+all.results<-all.results[order(all.results$P_VAL),]
+
+r.primary<-all.results
+rm(PHENO,modSv1,beta_matrix,all.results)
+
+## ---- secondary ------------------------------------
+load("sva_pets_secondary.Rdata")
+PHENO<-modSv1
+samplename<-rownames(PHENO) ## 380 samples
+beta_matrix<- t(M.allergy[,samplename])
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(beta_matrix)), dimnames(beta_matrix)[[2]]), RLMtest, meth_matrix=beta_matrix, pet=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4=PHENO[,5],S1=PHENO[,6],S2=PHENO[,7],S3=PHENO[,8],S4=PHENO[,9]))
+
+setattr(ind.res, 'class', 'data.frame')
+setattr(ind.res, "row.names", c(NA_integer_,4))
+setattr(ind.res, "names", make.names(names(ind.res), unique=TRUE))
+probelistnames <- names(ind.res)
+all.results <- t(data.table(ind.res))
+all.results<-data.table(all.results)
+all.results[, probeID := probelistnames]
+setnames(all.results, c("BETA","SE", "P_VAL", "probeID")) # rename columns
+setcolorder(all.results, c("probeID","BETA","SE", "P_VAL"))
+rm(probelistnames, ind.res)
+
+beta_matrix<-t(beta_matrix)
+all.results<-all.results[match(rownames(beta_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(beta_matrix))
+
+all.results<-all.results[order(all.results$P_VAL),]
+
+r.secondary<-all.results
+rm(PHENO,modSv1,beta_matrix,all.results)
+
+
+df<-merge(r.infancy,r.preschool,by= "probeID")
+df<-merge(df,r.primary,by= "probeID")
+df<-merge(df,r.secondary,by= "probeID")
+
+write.csv2(df, "CpG_allergy_to_pets_sva.csv",row.names = F)
 
