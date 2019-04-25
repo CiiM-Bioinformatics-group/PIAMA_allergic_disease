@@ -23,6 +23,8 @@ S7. DMR analysis;
 
 S8. IgE stratified analysis.
 
+S9. Other test
+
 Plots include:
 
 P1. Manhattan plot and QQ plot of 3 phenotypes;
