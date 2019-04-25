@@ -34,3 +34,13 @@ P2. Boxplot of important CpGs; Boxplot of different time windows;
 P3. Venn diagram of 3 phenotypes;
 
 P4. Ohter useful plots.
+
+Data management
+
+D1 phenotype of allergic disease
+
+D2 phenotype of environmental factors
+
+D3 phenotype of lung function
+
+
