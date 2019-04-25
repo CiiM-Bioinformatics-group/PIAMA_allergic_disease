@@ -1,0 +1,31 @@
+# phenotype of allergic disease
+# this file include age, gender, batch, center, ethnics, asthma, rhinitis, allergy, IgE sensitization
+
+setwd("~/Documents/Projects/PIAMA/")
+pheno.brush<-read.csv("~/Documents/Projects/PIAMA/Allergic diseases/IgE_sensitivity/data/PIAMA_pheno_brush_addIgE.csv")
+atopy<-read.csv("~/Documents/Projects/Atopic_asthma_replication/data/allergy_for_PIAMA_replication_juan.csv")
+index<-match(pheno.brush$newid,atopy$X)
+pheno.2<-atopy[index,]
+pheno.brush$atopy2<-pheno.2$Ige.s
+pheno.brush$asthma2<-pheno.2$asthma
+
+pheno<-pheno.brush[,c("Sample","newid","age16yrs","BGENDER","COORD","batch","etchgr_cbs","asthma16","rhinitis16","allergy","atopy","asthma2")]
+colnames(pheno)[11]<-"IgE"
+colnames(pheno)[12]<-"asthma_PR"
+save(pheno,file = "./data/PIAMA_phenotype16_allergic_disease.Rdata")
+
+# BGENDER 1=girl 2=boy
+# COORD (study center) 1= Groningen 2= Utrecht 3= Rotterdam
+# etchgr_cbs 1= father and mother born in the Netherlands; 
+#            2= father or mother born in other western countries; 
+#            3= father or mother born in non-western countries.
+# asthma16: the presence of at least 2 out of the following 3 criteria: 
+#           1) Doctor diagnosed asthma ever; 
+#           2) Wheeze in the last 12 months; 
+#           3) Prescription of asthma medication in the last 12 months.
+# rhinitis16: the presence of sneezing or a runny or stuffed nose without having a cold in the previous 12 months or the presence of hayfever in the previous 12 months.
+# allergy: asthma16 and/or rhinitis16
+# IgE: Serum specific IgE to house dust mite, cat, dactylis (grass) and birch was measured and classified as positive if ≥ 0.35 IU/ml.
+# asthma_PR: (Did a doctor ever diagnose asthma in your child? ) AND 	 
+#            (Wheeze in the last 12 months)  OR  (Has your child had medication for respiratory or lung problems) 
+
