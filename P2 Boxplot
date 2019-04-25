@@ -1,0 +1,103 @@
+## this script is to make boxplot of interested CpGs
+
+rm(list = ls())
+
+library(ggplot2)
+library(ggpubr)
+
+##################################### single boxplot #####################################
+# load beta value matrix and phenotype
+load("~/Documents/Projects/PIAMA/Allergic diseases/data/PIAMA_brush.Rdata")
+beta.brush<-beta.brush[,-grep("_duplo",colnames(beta.brush))]
+pheno<-read.csv("~/Documents/Projects/PIAMA/Allergic diseases/phenotype_origin/Phenotype_brush16_PIAMA_add_allergy.csv")
+pheno$Sample<-as.character(pheno$Sample)
+pheno$Sample<-gsub("_duplo","",pheno$Sample)
+beta.matrix<-beta.brush[,match(pheno$Sample,colnames(beta.brush))]
+
+# extract beta values for the interested CpG
+cpg<-"cg03565274"
+beta<-as.data.frame(beta.matrix[grep(cpg,rownames(beta.matrix)),])
+colnames(beta)<-cpg
+beta$allergy<-pheno$allergy[match(rownames(beta),pheno$Sample)]
+beta$allergy<-as.factor(beta$allergy)
+levels(beta$allergy)<-c("control","allergy")
+
+p1 <- ggplot(data = beta, aes(x = allergy, y = beta[,1],fill=allergy)) +
+    scale_y_continuous(name = "methylation level (beta value)") +
+    ggtitle(cpg) +
+    geom_boxplot() +
+    geom_jitter(width = 0.2)+
+    labs(x="",y="beta")+
+    theme_bw()
+
+# save the figure
+
+##################################### multiple boxplot #####################################
+# boxplot for different time windows
+
+rm(list = ls())
+
+setwd("~/Documents/Projects/PIAMA/")
+load("./Allergic diseases/data/PIAMA_brush.Rdata")
+load("./Allergic diseases/data/cpgname_replication_noNA.Rdata")
+beta.allergy<-beta.brush[match(allergy.rep,rownames(beta.brush)),]
+colnames(beta.allergy)<-gsub("_duplo","",colnames(beta.allergy))
+
+pets<-read.table("Exposures/mould_pets/Pets.txt",header = T,sep = "\t")
+pheno<-read.csv("Exposures/mould_pets/pets/PIAMA_phenotype_brush_MandP.csv")
+
+pheno$pet_infancy<-as.factor(pets$pet_infancy[match(pheno$newid,pets$ID)])
+pheno$pet_preschool<-as.factor(pets$pet_preschool[match(pheno$newid,pets$ID)])
+pheno$pet_primary<-as.factor(pets$pet_primary[match(pheno$newid,pets$ID)])
+pheno$pet_secondary<-as.factor(pets$pet_secondary[match(pheno$newid,pets$ID)])
+
+beta.allergy<-beta.allergy[,match(pheno$Sample,colnames(beta.allergy))]
+cpg<-"cg03565274"
+beta<-as.data.frame(beta.allergy[grep(cpg,rownames(beta.allergy)),])
+colnames(beta)<-cpg
+beta$allergy<-as.factor(pheno$allergy)
+
+beta$pet_infancy<-as.factor(pheno$pet_infancy)
+beta$pet_preschool<-as.factor(pheno$pet_preschool)
+beta$pet_primary<-as.factor(pheno$pet_primary)
+beta$pet_secondary<-as.factor(pheno$pet_secondary)
+beta<-na.omit(beta)
+
+## in pre and primary school, there're 3 levels(explianed by Edith):
+# Preschool=2 means participants had pets the entire time window (every year1 up to 4).
+# Preschool=1 means participants had pets at least one year within the time window( either year 1, 2 3 or 4 but not all of them).
+# Preschool=0 means participants did not have pets during any time within the time window. 
+# in this analysis, we focus on any pets exposure VS no pets exposure, so we combined 2 and 1 to "1"
+
+levels(beta$pet_preschool)<-c("0","1","1")
+levels(beta$pet_primary)<-c("0","1","1")
+
+beta1<-data.frame(beta=beta$cg03565274,category=beta$pet_infancy,type="infancy")
+beta2<-data.frame(beta=beta$cg03565274,category=beta$pet_preschool,type="preschool")
+beta3<-data.frame(beta=beta$cg03565274,category=beta$pet_primary,type="primary")
+beta4<-data.frame(beta=beta$cg03565274,category=beta$pet_secondary,type="secondary")
+
+# make a data frame for plot
+df<-rbind(beta1,beta2,beta3,beta4)
+levels(df$category)<-c("No pets","Have pets")
+levels(df$type)<-c("infancy","preschool","primary school","secondary school")
+
+# adding p value or * from logistic model, which is in supplements table E26, by changing "label"("p.format" or "p.sigif")
+p2 <- ggboxplot(df, x = "category", y = "beta",
+          color = "category", palette = "jco",
+          add = "jitter",
+          facet.by = "type", short.panel.labs = FALSE)+
+  stat_compare_means(comparisons = list(c("Have pets","No pets")),
+                     label = "p.sigif",method = "t.test")
+
+# save figures
+pdf(p1)
+p1
+dev.off()
+
+pdf(p2)
+p2
+dev.off()
+
+
+
