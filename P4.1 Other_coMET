@@ -1,0 +1,107 @@
+## here provide other plots that maybe useful
+
+#################################  coMET plot  #################################
+
+library("coMET")
+library("Gviz")
+library("rtracklayer")
+library("gdata")
+
+setwd("/home/p282473/projects/PIAMA")
+load("./data/PIAMA_brush.Rdata")
+load("./coMET/cpgname_replication.Rdata")
+anno<-read.csv("/home/p282473/projects/HumanMethylation450.csv",stringsAsFactors = F)
+
+# read summary statistics of allergy/rhinitis/asthma
+p.all<-read.table("./SVA_on_trimed_M/be/PIAMA_16_allergy_brush_sva_model2_be.gz")
+
+Hit_Probes=anno[anno$IlmnID %in% p.all$probeID, c(1,3,4) ]
+pvalue<- p.all[match(as.character(Hit_Probes$IlmnID),p.all$probeID),4]
+beta<- p.all[match(as.character(Hit_Probes$IlmnID),p.all$probeID),2]
+data.all<- cbind(Hit_Probes,pvalue,beta)
+colnames(data.all)<- c("TargetID","CHR","MAPINFO","Pval","BETA")
+data2<- data.all[order(data.all$CHR, data.all$MAPINFO),]
+rm(data.all,anno)
+
+# input cpgname of different phenotype
+setwd("./coMET/allergy")
+cpgname.all<-allergy.rep
+
+for (i in 1 : length(cpgname.all))
+{
+  cpgname<- cpgname.all[i]
+  cpg.gap<- 15
+  
+  position<- which(data2$TargetID==cpgname)
+  target.cpg<- data2[position,]
+  chrom <- paste0("chr",target.cpg$CHR)
+  
+  cpggroup<- as.character(data2$TargetID)[(position-cpg.gap):(position+cpg.gap-1)]
+  data.cpg<- data2[(position-cpg.gap):(position+cpg.gap-1),]
+  write.table(data.cpg, file= paste0(cpgname, "_infofile.txt"), row.names=F, sep="\t",quote = F)
+  
+  start <- data.cpg$MAPINFO[1]-1
+  end <- data.cpg$MAPINFO[dim(data.cpg)[1]] +1
+  
+  betac<- t(beta.brush[cpggroup,])
+  write.table(betac, file= paste0(cpgname, "_corfile.txt"), row.names=F, sep="\t",quote = F)
+  
+  code   <- readLines('example_configfile.txt')
+  output.newname <- paste(cpgname, "_configfile.txt", sep="")
+  code.new <- gsub( "cg12345678", cpgname, code)
+  code.new <- gsub( "123start", start, code.new)
+  code.new <- gsub( "123end", end, code.new)
+  
+  for(i in 1:length(code.new)) 
+  {
+    if(i >  1) cat(code.new[i], file = output.newname, sep=c("\n"), fill=TRUE,  append = TRUE)
+  }
+  
+  configfile <- file.path(paste0(cpgname,"_configfile.txt"))
+  myinfofile <- file.path(paste0(cpgname,"_infofile.txt"))
+  mycorrelation <- file.path(paste0(cpgname,"_corfile.txt"))
+  
+  comet.web(config.file=configfile, mydata.file=myinfofile, 
+            cormatrix.file=mycorrelation,print.image=TRUE, verbose=F)
+}
+
+
+#################################  example configfile  #################################
+# please copy the example config into a .txt file and in the same folder
+
+disp.mydata=TRUE
+mydata.format=site_asso
+disp.association=TRUE
+disp.region=FALSE
+sample.labels=CpG
+symbols=circle-fill
+lab.Y=log
+mydata.ref=cg12345678
+disp.color.ref=TRUE
+pval.threshold=1.14e-07
+mydata.large.format=region_asso
+disp.association.large=TRUE
+disp.region.large=TRUE
+sample.labels.large=Gene expression
+color.list.large=pink
+symbols.large=square-fill
+Start=123start
+End=123end
+cormatrix.format=raw
+disp.cormatrixmap=TRUE
+cormatrix.method=spearman
+cormatrix.color.scheme=bluewhitered
+disp.phys.dist=TRUE
+disp.color.bar=TRUE
+disp.legend=TRUE
+list.tracks=CGI,geneENSEMBL,SNP,RegENSEMBL,ChromHMM,DNAse
+disp.mult.lab.X=FALSE
+image.type=pdf
+image.title=cg12345678
+image.name=coMET_cg12345678
+image.size=7
+genome=hg19
+dataset.gene=hsapiens_gene_ensembl
+
+
+
