@@ -27,3 +27,18 @@ for (i in 1:length(all.rep))
   rug(betai)
   dev.off()
 }
+
+########################### deal with old and new ID in PIAMA ###########################
+piama_ts_newid<- function(sampleid)
+  ## transform old_sampleid to new_sampleid
+{
+  key<- read.csv("/Users/cheng/Documents/BigData/Phenotype/keyid_1.csv")
+nindex<-seq(1,length(sampleid))
+index<- match(sampleid,key[,1])
+index.c<- cbind(index,nindex); 
+index.c2<- na.omit(index.c)
+newid<- sampleid
+newid[index.c2[,2]]<- key[index.c2[,1],2] 
+return (newid)
+}
+
