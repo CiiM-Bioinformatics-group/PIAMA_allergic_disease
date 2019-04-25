@@ -1,0 +1,93 @@
+## this script is to make QQ plot and manhattan plot
+## performed on Cancan's mac, 31/01/2018
+
+
+library(qqman)
+library(ggplot2)
+library(MASS)
+library(GWASTools)
+library(ggrepel)
+library(dplyr)
+#library(GenABEL) # this pacakge dosent work in R 3.5
+
+setwd("~/Documents/Projects/PIAMA/Allergic diseases/SVA_on_trimmed_M/be/")
+results<-read.table("PIAMA_16_allergy_brush_sva_model2_be.gz")
+anno<-read.csv("~/Documents/Projects/PIAMA/HumanMethylation450.csv",stringsAsFactors = F)
+
+# add fdr and find sig
+results<-results[order(results$P_VAL),]
+pvalue<-results$P_VAL
+FDR<-p.adjust(results$P_VAL,"fdr")
+results<-cbind(results,FDR)
+
+# add annotation
+index<-match(results$probeID,anno$IlmnID)
+anno1<-anno[index,]
+results<-cbind(results,anno1)
+
+sig<-results[(which(results$FDR<0.05)),]
+write.table(sig,"PIAMA_brush_allergy_sig.txt",row.names = F)
+
+########################  QQ plot  ########################
+pvalue<-results$P_VAL
+pdf("qqplot_brush_allergy.pdf",width=6, height=6)
+qq(pvalue)
+t <-median(qchisq(as.numeric(as.character(pvalue)),df=1,lower.tail = F),na.rm = T)/qchisq(0.5,1)
+lamda<- round(t,digit=3)
+text (2,5, paste0("lambda=",lamda),cex = 1)
+dev.off()
+
+########################  manhattan plot  ########################
+# rename the data frame
+man<-results[,c("probeID","CHR","MAPINFO","P_VAL")]
+colnames(man)<-c("SNP","CHR","BP","P")
+man<-droplevels(man)
+man$SNP<-as.character(man$SNP)
+man$CHR<-as.integer(man$CHR)
+
+# threshold of bonferroni and fdr
+bonfer<--log10(0.05/nrow(results))
+fdr<--log10(max(sig$P_VAL))
+
+##### add hightlight and annotation #####
+# load CpG of interest
+# allergy
+snpsOfInterest<-c("cg20372759","cg08844313","cg20790648","cg15006973","cg24707200","cg07239613","cg01870976","cg09472600","cg22855021","cg19610615")
+## rhinitis
+snpsOfInterest<-c("cg20372759","cg20790648","cg08844313","cg15006973","cg24707200","cg10549071","cg19610615","cg22855021","cg10830021","cg09472600")
+## asthma
+snpsOfInterest<-c("cg08844313")
+
+man.sig<-man[match(snpsOfInterest,man$SNP),]
+
+
+y<- -log10(man.sig$P) +0.019*12
+
+# calculate the cumulative position of SNP
+width<-c()
+cum<-c()
+cum[1]<-0
+for (i in 1:22){
+  width[i]<-max(man$BP[which(man$CHR==i)])-min(man$BP[which(man$CHR==i)])
+  cum[i+1]<-cum[i]+width[i]
+}
+x<-c()
+for (i in 1:length(y)){
+  if(man.sig$CHR[i]<=12)
+    x[i]<-man.sig$BP[i]+cum[as.numeric(man.sig$CHR[i])]
+  else
+    x[i]<-1.5*man.sig$BP[i]+cum[as.numeric(man.sig$CHR[i])]
+}
+
+annotate.cex=1.3;annotate.font=3
+manhattan(man,suggestiveline = fdr,genomewideline = F,col = c("blue4", "orange3"),highlight=snpsOfInterest)
+
+# text cpg name to the figure
+for (i in 1:length(y)){
+  text(x[i],y[i],snpsOfInterest[i],cex=annotate.cex,adj=c(0,0.48),font=annotate.font)
+}
+
+# then save the figure
+
+
+
