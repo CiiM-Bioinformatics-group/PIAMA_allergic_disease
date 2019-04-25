@@ -1,0 +1,16 @@
+## here are other test that maybe useful
+
+########################### diptest (to test biomodal) ###########################
+library(diptest)
+# example code
+p<-c()
+for (i in 1:length(all.rep))
+{
+  cpgi<-all.rep[i]
+  betai<-beta_matrix[grep(cpgi,rownames(beta_matrix)),]
+  testi<-dip.test(betai,simulate.p.value = T,B = 1000)
+  pi<-testi$p.value
+  names(pi)<-cpgi
+  p<-c(p,pi)
+}
+
