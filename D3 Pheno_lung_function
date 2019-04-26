@@ -1,0 +1,15 @@
+## lung function were prepared and corrected for measurment methods by Edith
+## the original file is in the folder "~/Documents/Projects/PIAMA/lung_function/phenotype/"
+
+## 1. lung function add height and weigh (799 samples in total)
+library(foreign)
+
+setwd("~/Documents/Projects/PIAMA/lung_function/phenotype/")
+lf<-read.table("Lungfunction16_corrected.txt",header = T,sep = "\t")
+hw<-read.spss("./anthro_medex4to16y_blzt.sav", to.data.frame=TRUE)
+
+## add height and weight of 16 years
+lf$weight<-hw$pweigant[match(lf$id,hw$id)]
+lf$height<-hw$plengant[match(lf$id,hw$id)]
+save(lf,file="~/Documents/Projects/PIAMA/data/PIAMA_phenotype16_lung_function.Rdata")
+
