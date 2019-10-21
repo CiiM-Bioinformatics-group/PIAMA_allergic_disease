@@ -5,6 +5,8 @@ epithelium, might provide insights into mechanisms of allergic disease. We aimed
 to identify and interpret methylation signatures in nasal epithelial brushes
 associated with rhinitis and asthma.
 
+Cancan Qi, email: tracyqican@gmail.com
+
 The scripts include:
 
 S1. EWAS of asthma, rhinitis and allergic disease;
