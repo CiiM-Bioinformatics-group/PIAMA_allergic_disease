@@ -30,7 +30,7 @@ write.table(sig,"PIAMA_brush_allergy_sig.txt",row.names = F)
 
 ########################  QQ plot  ########################
 pvalue<-results$P_VAL
-pdf("qqplot_brush_allergy.pdf",width=6, height=6)
+tiff("qqplot_brush_allergy.tiff",width=1500, height=1500,res=300)
 qq(pvalue)
 t <-median(qchisq(as.numeric(as.character(pvalue)),df=1,lower.tail = F),na.rm = T)/qchisq(0.5,1)
 lamda<- round(t,digit=3)
@@ -61,7 +61,7 @@ snpsOfInterest<-c("cg08844313")
 man.sig<-man[match(snpsOfInterest,man$SNP),]
 
 
-y<- -log10(man.sig$P) +0.019*12
+y<- -log10(man.sig$P) +0.018*12
 
 # calculate the cumulative position of SNP
 width<-c()
@@ -80,14 +80,14 @@ for (i in 1:length(y)){
 }
 
 annotate.cex=1.3;annotate.font=3
+
+tiff("manhattan_brush_allergy.tiff",width=2600, height=2000,res=200)
 manhattan(man,suggestiveline = fdr,genomewideline = F,col = c("blue4", "orange3"),highlight=snpsOfInterest)
 
 # text cpg name to the figure
 for (i in 1:length(y)){
   text(x[i],y[i],snpsOfInterest[i],cex=annotate.cex,adj=c(0,0.48),font=annotate.font)
 }
-
-# then save the figure
-
+dev.off()
 
 
