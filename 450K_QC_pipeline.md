@@ -36,35 +36,56 @@ setwd(loc)
 targets <- read.metharray.sheet(loc.sheet, pattern="*.csv", recursive=TRUE)
 targets$Basename <- apply(targets, 1, function(target) {paste(target[6], target[7], sep="_")})
 RG.set <- read.metharray.exp(base=file.path(loc.idat, basename=targets$Slide), targets=targets, recursive=TRUE)
-save(RG.set, file="filename")
+Pheno.data <- pData(RG.set)
 
 ```
 
 ## Quality Control
 
-### 1. Identify bad quality samples
+### 1. Get QC report
+```R
+## creat QC report
+qcReport(RG.set, sampNames = pd$Sample_Name, 
+         sampGroups = pd$Sample_Group, pdf = "minfi_qcReport.pdf", maxSamplesPerPage = 6, 
+         controls = c())
+
+## creat a methylset
+MSet.raw <- preprocessRaw(RG.set) # raw preprocessing
+MSet.raw
+
+## qc plot
+qc <- getQC(MSet.raw)
+pdf("minfi_qcplot.pdf")
+plotQC(qc)
+dev.off()
+
+## sex prediction
+predicted.sex <- getSex(gm.set, cutoff = -2)
+pdf("predicted_sex.pdf")
+plotSex(predicted.sex)
+dev.off()
+         
+```
+
+### 2. Identify bad quality samples
 
 ```R
 #get p values of positions
-p.values.probes <- detectionP(RG.set)
+det.p <- detectionP(RG.set)
 
-#get failed positions
-failed.probes <- p.values.probes > 0.01
+# get bad quality samples 
+bad.samples <- colMeans(det.p > 0.01) > 0.05
+bad.sample.names.detP <- colnames(det.p[,bad.samples])
+bad.sample.detp.rs <- data.frame(CallRate=1-colMeans(det.p[,bad.samples] > 0.01))
+rownames(bad.sample.detp.rs) <- rg.set$Sample_Name[rg.set$Basename %in% bad.sample.names.detP]
+write.csv(bad.sample.detp.rs, file=paste(loc.data, "Bad_Samples_CallRate.csv", sep="/"))
+save(rg.set, targets, bad.sample.names.detP, bad.samples, file=paste(loc.rgdata, "RG_Channel_Set.Rdata", sep = "/"))
 
-#fraction of failed positions per sample 
-failed.fraction <- colMeans(failed.probes)
-failed.fraction <- data.frame(failed.fraction)
-failed.fraction <- cbind(pheno.data$Sample.ID,failed.fraction)
+## 
+targets <- targets[!bad.samples,]
+rg.set <- read.metharray.exp(base=file.path(loc.idat, basename=targets$Slide), targets=targets, recursive=TRUE)
+save(RG.set, targets, bad.sample.names.detP, bad.samples, file=paste(loc.rgdata, "RG_Channel_Set_Clean.Rdata", sep = "/"))
 
-#get bad quality samples (samples with more than 0ne percent failed positions
-failed.fraction <- data.frame(failed.fraction[failed.fraction[,2] > 0.01,])
-
-#save data
-save(failed.fraction, file = "filename")
 
 ```
-
-
-
-
 
