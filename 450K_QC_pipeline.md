@@ -141,8 +141,8 @@ bad.probe.names.detP <- rownames(det.p[bad.probes,])
 
 ```
 
-* 3.2 Filter targets from multiple genomic sites
-Reference: From supplementary material Chen et al. Epigenetics 2013
+* 3.2 Filter targets from multiple genomic sites <br>
+Reference: From supplementary material Chen et al. Epigenetics 2013 <br>
 http://www.sickkids.ca/Research/Weksberg-Lab/Publications/index.html. 
 
 ```R
