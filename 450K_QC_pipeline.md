@@ -142,10 +142,10 @@ bad.probe.names.detP <- rownames(det.p[bad.probes,])
 ```
 
 * 3.2 Filter targets from multiple genomic sites
+Reference: From supplementary material Chen et al. Epigenetics 2013
+http://www.sickkids.ca/Research/Weksberg-Lab/Publications/index.html. 
 
 ```R
-# From supplementary material Chen et al. Epigenetics 2013
-# URL   http://www.sickkids.ca/Research/Weksberg-Lab/Publications/index.html. 
 nonspec <- read.csv("Chen_nonspecific_probes_450k.csv", header = TRUE, sep = ";")
 bad.probe.names.cr <- as.character(nonspec$TargetID[which((nonspec$bm50 + nonspec$bm49 + nonspec$bm48 + nonspec$bm47) > 0)]) 
 
