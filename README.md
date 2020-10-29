@@ -9,32 +9,25 @@ Cancan Qi, email: tracyqican@gmail.com
 
 ## Content of the scripts of the projects
 ### 1. The scripts of main anlayses include
-*S1. EWAS of asthma, rhinitis and allergic disease;
-*S2. meta analysis of discovery and replication;
-*S3. eQTM analysis of replicated CpGs, and pathway analysis;
-*S4. prediction of allergic disease;
-*S5. single cell analysis of 2 asthma patients and 2 controls;
-*S6. correlation with environmental factors;
-*S7. DMR analysis;
-*S8. IgE stratified analysis.
-*S9. Other test
+* S1. EWAS of asthma, rhinitis and allergic disease;
+* S2. meta analysis of discovery and replication;
+* S3. eQTM analysis of replicated CpGs, and pathway analysis;
+* S4. prediction of allergic disease;
+* S5. single cell analysis of 2 asthma patients and 2 controls;
+* S6. correlation with environmental factors;
+* S7. DMR analysis;
+* S8. IgE stratified analysis.
+* S9. Other test
 
-## Plots include
+### 2. The scriptes of main plots include
+* P1. Manhattan plot and QQ plot of 3 phenotypes;
+* P2. Boxplot of important CpGs; Boxplot of different time windows;
+* P3. Venn diagram of 3 phenotypes;
+* P4. Ohter useful plots.
 
-P1. Manhattan plot and QQ plot of 3 phenotypes;
-
-P2. Boxplot of important CpGs; Boxplot of different time windows;
-
-P3. Venn diagram of 3 phenotypes;
-
-P4. Ohter useful plots.
-
-## Data management
-
-D1 phenotype of allergic disease
-
-D2 phenotype of environmental factors
-
-D3 phenotype of lung function
+### 3. The scripts for Data management
+* D1 phenotype of allergic disease
+* D2 phenotype of environmental factors
+* D3 phenotype of lung function
 
 
