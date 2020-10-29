@@ -110,3 +110,49 @@ gzip(filename)
 ```
 
 ## QQ plot and Manhattan Plot 
+
+```R
+library(qqman)
+library(ggplot2)
+library(MASS)
+library(GWASTools)
+library(ggrepel)
+library(dplyr)
+
+## load EWAS results and illumina annotation files (can be downloaded from illumina website)
+results<-read.table("PIAMA_16_allergy_brush_sva_model2_be.gz")
+anno<-read.csv("~/Documents/Projects/PIAMA/HumanMethylation450.csv",stringsAsFactors = F)
+
+# add fdr and find sig
+results<-results[order(results$P_VAL),]
+pvalue<-results$P_VAL
+FDR<-p.adjust(results$P_VAL,"fdr")
+results<-cbind(results,FDR)
+
+# add annotation
+index<-match(results$probeID,anno$IlmnID)
+anno1<-anno[index,]
+results<-cbind(results,anno1)
+
+sig<-results[(which(results$FDR<0.05)),]
+write.table(sig,"PIAMA_brush_allergy_sig.txt",row.names = F)
+
+########################  QQ plot  ########################
+pvalue<-results$P_VAL
+tiff("qqplot_brush_allergy.tiff",width=1500, height=1500,res=300)
+qq(pvalue)
+t <-median(qchisq(as.numeric(as.character(pvalue)),df=1,lower.tail = F),na.rm = T)/qchisq(0.5,1)
+lamda<- round(t,digit=3)
+text (2,5, paste0("lambda=",lamda),cex = 1)
+dev.off()
+
+########################  manhattan plot  ########################
+# rename the data frame
+man<-results[,c("probeID","CHR","MAPINFO","P_VAL")]
+colnames(man)<-c("SNP","CHR","BP","P")
+man<-droplevels(man)
+man$SNP<-as.character(man$SNP)
+man$CHR<-as.integer(man$CHR)
+
+
+```
