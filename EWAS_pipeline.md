@@ -154,7 +154,9 @@ man<-droplevels(man)
 man$SNP<-as.character(man$SNP)
 man$CHR<-as.integer(man$CHR)
 
+bonfer<--log10(0.05/nrow(results))
+fdr<--log10(max(sig$P_VAL))
 
-manhattan(man,suggestiveline = fdr,genomewideline = F,col = c("blue4", "orange3"),highlight=snpsOfInterest)
+manhattan(man,suggestiveline = fdr,genomewideline = bonfer,col = c("blue4", "orange3"))
 
 ```
