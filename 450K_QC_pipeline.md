@@ -2,7 +2,7 @@
 
 ## Preparation
 
-### 1. Install R packages
+### 1. Install and load R packages
 ```R
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -14,6 +14,9 @@ BiocManager::install("GO.db")
 BiocManager::install("AnnotationDbi")
 BiocManager::install("org.Hs.eg.db")
 install.packages(c("ggplots2", "ggfortify", "RColorBrewer", "gridExtra", "pheatmap", "sva", "MASS", "compare", "tableone", "matrixStats", "plyr", "qqman", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival"))
+
+## also load the R packages
+
 ```
 
 ### 2. Input Data
@@ -22,8 +25,6 @@ install.packages(c("ggplots2", "ggfortify", "RColorBrewer", "gridExtra", "pheatm
 
 ### 3. Load data
 ```R
-library(minfi)
-
 # set the locations of important files
 loc <- "/data/f114798/"
 loc.idat <- "Data/ImageData"
@@ -45,8 +46,8 @@ Pheno.data <- pData(RG.set)
 ### 1. Get QC report
 ```R
 ## creat QC report
-qcReport(RG.set, sampNames = pd$Sample_Name, 
-         sampGroups = pd$Sample_Group, pdf = "minfi_qcReport.pdf", maxSamplesPerPage = 6, 
+qcReport(RG.set, sampNames = Pheno.data$Sample_Name, 
+         sampGroups = Pheno.data$Sample_Group, pdf = "minfi_qcReport.pdf", maxSamplesPerPage = 6, 
          controls = c())
 
 ## creat a methylset
@@ -58,16 +59,43 @@ qc <- getQC(MSet.raw)
 pdf("minfi_qcplot.pdf")
 plotQC(qc)
 dev.off()
-
-## sex prediction
-predicted.sex <- getSex(gm.set, cutoff = -2)
-pdf("predicted_sex.pdf")
-plotSex(predicted.sex)
-dev.off()
          
 ```
 
-### 2. Identify bad quality samples
+### 2. Check Gender Concordance
+```R
+## get gset
+ratioSet <- ratioConvert(MSet.raw, what = "both", keepCN = TRUE)
+gset <- mapToGenome(ratioSet)
+
+## sex prediction
+predictedSex <- getSex(gset, cutoff = -2)$predictedSex
+gset <- addSex(gset, sex=predictedSex)
+
+## 
+pheno.order <- data.frame(Pheno.data[,c(2,3)])
+pheno.order.plus.sex <- cbind(pheno.order,predictedSex)
+save(pheno.order.plus.sex, file = "../../Data/pheno_order_plus_sex.R")
+
+documentedSex <-Pheno.data$gender
+levels(documentedSex) <- c("F","M") ## change the sex markers if it is not F and M in your origin data
+
+gcheck <- function(docsex,predsex,samnam) {
+  docsex <- as.character(docsex)
+  sex.match <- identical(docsex,predsex)
+  if (sex.match == FALSE) {
+    sex.mismatch <- samnam[which(docsex != predsex)]
+    write.csv(sex.mismatch, file="sexmismatch.csv") }
+}
+gcheck(documentedSex,predictedSex, Pheno.data$Sample_Name)
+
+pdf("sex_concordance_plot.pdf")
+plotSex(getSex(gset, cutoff = -2))
+dev.off()
+
+```
+
+### 3. Identify bad quality samples
 
 ```R
 #get p values of positions
