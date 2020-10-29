@@ -5,8 +5,16 @@
 ## Generate surrogate variables (for tissue other than blood)
 
 ```R
-load("M_values.Rdata")
+library(sva)
+library(tableone)
+library(matrixStats)
+
+load("M_matrix.Rdata")
 PHENO<-read.csv("phenotype.csv")
+## samples in M_matrix and PHENO should match in orders
+
+k = which(is.na(M_matrix), arr.ind=TRUE)
+M_matrix[k] = rowMedians(M_matrix, na.rm=TRUE)[k[,1]]
 
 mod1<-model.matrix(~.,PHENO)
 mod0<-model.matrix(~.,PHENO[,-1])
