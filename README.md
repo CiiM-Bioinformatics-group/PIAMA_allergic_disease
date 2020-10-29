@@ -7,7 +7,8 @@ associated with rhinitis and asthma.
 
 Cancan Qi, email: tracyqican@gmail.com
 
-## Content of the scripts of this projects
+## Content of the scripts used in this project
+
 ### 1. The scripts of main anlayses (folder "Main")
 * S1. EWAS of asthma, rhinitis and allergic disease;
 * S2. meta analysis of discovery and replication;
@@ -25,9 +26,24 @@ Cancan Qi, email: tracyqican@gmail.com
 * P3. Venn diagram of 3 phenotypes;
 * P4. Ohter useful plots.
 
-### 3. The scripts for Data management (folder "Phenotypes")
+### 3. The scripts for Data management (folder "Phenotype")
 * D1 phenotype of allergic disease
 * D2 phenotype of environmental factors
 * D3 phenotype of lung function
+
+
+## General pipelines for DNA methylation 450K data
+
+### 1. Quality control
+* QC of samples
+* QC of probes
+* Data normalization
+
+### 2. EWAS (logistic regression model)
+* Data trimming
+* SVA
+* Fit logistic regression model
+* QQplot and Manhattan plot
+
 
 
