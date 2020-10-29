@@ -2,6 +2,41 @@
 
 ## Remove outliers using the IQR*3 (Tukey) method
 
+```R
+## load DNA methylation beta values
+load("filename")
+
+# transfer beta value to M value
+M.brush<-log2(beta.brush/(1-beta.brush))
+save(M.brush,file="PIAMA_brush_M.Rdata")
+
+# trimming, remove outliers using the IQR*3 (Tukey) method
+removeOutliers<-function(probes){
+  require(matrixStats)
+  if(nrow(probes) < ncol(probes)) warning("expecting probes are rows (long dataset)")
+  rowIQR <- rowIQRs(probes, na.rm = T)
+  row2575 <- rowQuantiles(probes, probs = c(0.25, 0.75), na.rm = T)
+  maskL <- probes < row2575[,1] - 3 * rowIQR 
+  maskU <- probes > row2575[,2] + 3 * rowIQR 
+  initial_NAs<-rowSums(is.na(probes))
+  probes[maskL] <- NA
+  removed_lower <- rowSums(is.na(probes))-initial_NAs
+  probes[maskU] <- NA
+  removed_upper <- rowSums(is.na(probes))-removed_lower-initial_NAs
+  N_for_probe<-rowSums(!is.na(probes))
+  Log<-data.frame(initial_NAs,removed_lower,removed_upper,N_for_probe)
+  return(list(probes, Log))
+}
+
+system.time(OutlierResults<-removeOutliers(M.brush))
+M.brush2<-OutlierResults[[1]]
+Log<-OutlierResults[[2]]
+
+# save M values after trimming
+save(M.brush2,file="PIAMA_brush_trimmed_M.Rdata")
+save(Log,file="Outlier_log_M.Rdata")
+```
+
 ## Generate surrogate variables (for tissue other than blood)
 
 ```R
@@ -9,6 +44,7 @@ library(sva)
 library(tableone)
 library(matrixStats)
 
+## load trimmed M values
 load("M_matrix.Rdata")
 PHENO<-read.csv("phenotype.csv")
 ## samples in M_matrix and PHENO should match in orders
@@ -23,6 +59,8 @@ svobj1= sva(M_matrix,mod1,mod0,n.sv=n.sv)
 SVs = as.data.frame(svobj1$sv)
 colnames(SVs) <-paste0("sv",1:ncol(SVs))
 modSv1 = cbind(PHENO,SVs)
+save(modSV1,file="pheno_sva.Rdata")
+
 ```
 
 ## Fit logistic regression model
