@@ -64,5 +64,49 @@ save(modSV1,file="pheno_sva.Rdata")
 ```
 
 ## Fit logistic regression model
+```R
+# load libraries
+library(foreign)
+library(data.table) # to process results
+library(MASS) # rlm function for robust linear regression
+library(sandwich) # estimation of the standard error
+library(lmtest) # to use coeftest
+library(parallel) # to use multicore approach - part of base R
+library(R.utils)
+library(matrixStats)
+library(plyr) 
+
+## load trimmed M_matrix and phenotype
+load("M_matrix.Rdata")
+PHENO<-read.csv("phenotype.csv")
+## samples in M_matrix and PHENO should match in orders
+
+## function to perform logistic regression model
+## Y: disease/phenotype, X1...Xn: covariates
+
+GLMtest = function(meth_matrix,methcol,Y, X1, X2, X3, X4) {
+  mod = glm(Y~meth_matrix[, methcol] +X1+X2+X3+X4,family = "binomial")
+  cf = summary(mod)$coefficients
+  cf[2, c("Estimate", "Std. Error", "Pr(>|z|)")]  
+}
+
+system.time(ind.res <- mclapply(setNames(seq_len(ncol(M_matrix)), dimnames(M_matrix)[[2]]), GLMtest, meth_matrix=M_matrix, Y=PHENO[,1], X1=PHENO[,2], X2=PHENO[,3], X3=PHENO[,4],X4<- PHENO[,5]))
+
+# summary results
+all.results<-ldply(ind.res,rbind)
+names(all.results)<-c("probeID","BETA","SE", "P_VAL")
+
+# add sample size for each probe
+M_matrix<-t(M_matrix)
+all.results<-all.results[match(rownames(M_matrix),all.results$probeID),]
+all.results$N<-rowSums(!is.na(M_matrix))
+
+# calculate lambda value
+median(qchisq(as.numeric(as.character(all.results$P_VAL)),df=1,lower.tail = F),na.rm = T)/qchisq(0.5,1)
+
+# save results
+write.table(all.results, filename,na="NA")
+gzip(filename)
+```
 
 ## QQ plot and Manhattan Plot 
