@@ -3,6 +3,7 @@
 ## Preparation
 
 ### 1. Install and load R packages
+
 ```R
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -24,6 +25,7 @@ install.packages(c("ggplots2", "ggfortify", "RColorBrewer", "gridExtra", "pheatm
 * sample sheet 
 
 ### 3. Load data
+
 ```R
 # set the locations of important files
 loc <- "/data/f114798/"
@@ -44,6 +46,7 @@ Pheno.data <- pData(RG.set)
 ## Quality Control
 
 ### 1. Get QC report
+
 ```R
 ## creat QC report
 qcReport(RG.set, sampNames = Pheno.data$Sample_Name, 
@@ -62,7 +65,9 @@ dev.off()
          
 ```
 
-### 2. Check Gender Concordance
+### 2. Filter samples
+
+#### 2.1. Check Gender Concordance
 ```R
 ## get gset
 ratioSet <- ratioConvert(MSet.raw, what = "both", keepCN = TRUE)
@@ -71,11 +76,6 @@ gset <- mapToGenome(ratioSet)
 ## sex prediction
 predictedSex <- getSex(gset, cutoff = -2)$predictedSex
 gset <- addSex(gset, sex=predictedSex)
-
-## 
-pheno.order <- data.frame(Pheno.data[,c(2,3)])
-pheno.order.plus.sex <- cbind(pheno.order,predictedSex)
-save(pheno.order.plus.sex, file = "../../Data/pheno_order_plus_sex.R")
 
 documentedSex <-Pheno.data$gender
 levels(documentedSex) <- c("F","M") ## change the sex markers if it is not F and M in your origin data
@@ -95,25 +95,38 @@ dev.off()
 
 ```
 
-### 3. Identify bad quality samples
+#### 2.2. Identify bad quality samples
 
 ```R
 #get p values of positions
 det.p <- detectionP(RG.set)
 
 # get bad quality samples 
-bad.samples <- colMeans(det.p > 0.01) > 0.05
-bad.sample.names.detP <- colnames(det.p[,bad.samples])
-bad.sample.detp.rs <- data.frame(CallRate=1-colMeans(det.p[,bad.samples] > 0.01))
-rownames(bad.sample.detp.rs) <- rg.set$Sample_Name[rg.set$Basename %in% bad.sample.names.detP]
-write.csv(bad.sample.detp.rs, file=paste(loc.data, "Bad_Samples_CallRate.csv", sep="/"))
-save(rg.set, targets, bad.sample.names.detP, bad.samples, file=paste(loc.rgdata, "RG_Channel_Set.Rdata", sep = "/"))
+failed.probes <- det.p > 0.01
 
-## 
-targets <- targets[!bad.samples,]
-rg.set <- read.metharray.exp(base=file.path(loc.idat, basename=targets$Slide), targets=targets, recursive=TRUE)
-save(RG.set, targets, bad.sample.names.detP, bad.samples, file=paste(loc.rgdata, "RG_Channel_Set_Clean.Rdata", sep = "/"))
+#fraction of failed positions per sample 
+failed.fraction <- colMeans(failed.probes)
+failed.fraction <- data.frame(failed.fraction)
+failed.fraction <- cbind(Pheno.data$Sample_Name,failed.fraction)
 
+#get bad quality samples (samples with more than 0ne percent failed positions)
+failed.fraction <- data.frame(failed.fraction[failed.fraction[,2] > 0.01,])
+
+fail.detp<-failed.fraction$Pheno.data.Sample_Name
+write.csv(fail.detp, file="failed_samples_by_probe_frequency.csv")
 
 ```
+
+#### 2.3. Remove bad quality samples and sex mismatch samples
+
+```R
+## remove all failed samples from RGset
+fail.sample<-unique(c(sex.mismatch,fail.detp))
+fail.sample.index<-which(Pheno.data$Sample_Name %in% fail.sample)
+filtered_RG.set <- RG.set[,-bad.sample.index]
+save(filtered_RG.set,file="filename")
+```
+
+### 3. Filter probes
+
 
