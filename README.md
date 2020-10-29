@@ -7,8 +7,8 @@ associated with rhinitis and asthma.
 
 Cancan Qi, email: tracyqican@gmail.com
 
-## Content of the scripts of the projects
-### 1. The scripts of main anlayses include
+## Content of the scripts of this projects
+### 1. The scripts of main anlayses (folder "Main")
 * S1. EWAS of asthma, rhinitis and allergic disease;
 * S2. meta analysis of discovery and replication;
 * S3. eQTM analysis of replicated CpGs, and pathway analysis;
@@ -19,13 +19,13 @@ Cancan Qi, email: tracyqican@gmail.com
 * S8. IgE stratified analysis.
 * S9. Other test
 
-### 2. The scriptes of main plots include
+### 2. The scriptes of main plots (folder "Plots")
 * P1. Manhattan plot and QQ plot of 3 phenotypes;
 * P2. Boxplot of important CpGs; Boxplot of different time windows;
 * P3. Venn diagram of 3 phenotypes;
 * P4. Ohter useful plots.
 
-### 3. The scripts for Data management
+### 3. The scripts for Data management (folder "Phenotypes")
 * D1 phenotype of allergic disease
 * D2 phenotype of environmental factors
 * D3 phenotype of lung function
