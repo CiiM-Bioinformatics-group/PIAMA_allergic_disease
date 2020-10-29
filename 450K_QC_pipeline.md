@@ -67,7 +67,7 @@ dev.off()
 
 ### 2. Filter samples
 
-#### * 2.1. Check Gender Concordance
+* 2.1. Check Gender Concordance
 ```R
 ## get gset
 ratioSet <- ratioConvert(MSet.raw, what = "both", keepCN = TRUE)
