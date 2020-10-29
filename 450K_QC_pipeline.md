@@ -1,5 +1,7 @@
 # Quality Control of 450K DNA methylation data
 
+Reference: http://bioconductor.org/packages/release/bioc/vignettes/minfi/inst/doc/minfi.html
+
 ## Preparation
 
 ### 1. Install and load R packages
@@ -95,7 +97,7 @@ dev.off()
 
 ```
 
-#### * 2.2. Identify bad quality samples
+* 2.2. Identify bad quality samples
 
 ```R
 #get p values of positions
@@ -117,7 +119,7 @@ write.csv(fail.detp, file="failed_samples_by_probe_frequency.csv")
 
 ```
 
-#### * 2.3. Remove bad quality samples and sex mismatch samples
+* 2.3. Remove bad quality samples and sex mismatch samples
 
 ```R
 ## remove all failed samples from RGset
@@ -128,5 +130,79 @@ save(filtered_RG.set,file="filename")
 ```
 
 ### 3. Filter probes
+
+* 3.1 Filter on detection P values
+
+```R
+det.p <- detectionP(filtered_RG.set)
+bad.probes <- rowMeans(det.p > 0.01) > 0.1
+table(bad.probes)
+bad.probe.names.detP <- rownames(det.p[bad.probes,])
+
+```
+
+* 3.2 Filter targets from multiple genomic sites
+
+```R
+# From supplementary material Chen et al. Epigenetics 2013
+# URL   http://www.sickkids.ca/Research/Weksberg-Lab/Publications/index.html. 
+nonspec <- read.csv("Chen_nonspecific_probes_450k.csv", header = TRUE, sep = ";")
+bad.probe.names.cr <- as.character(nonspec$TargetID[which((nonspec$bm50 + nonspec$bm49 + nonspec$bm48 + nonspec$bm47) > 0)]) 
+
+```
+
+* 3.3 Drop probes with SNP at interrogation or extension site
+
+```R
+gset.nosnp <- dropLociWithSnps(gm.set, snps = c("CpG", "SBE"), maf = 0.05)
+all.probes <- rownames(gm.set)
+nosnp.probes <- rownames(gset.nosnp)
+bad.probe.names.pm <- all.probes[!(all.probes %in% nosnp.probes)]
+
+failed.probes <- unique(c(bad.probe.names.detP,bad.probe.names.cr,bad.probe.names.pm))
+save(failed.probes,file="failed_probes.Rdata")
+
+```
+
+* 3.4 Remove probes on X and Y chr
+
+```R
+print("get probes on X,Y")
+keepX <- featureNames(gm.set) %in% ann450k$Name[ann450k$chr %in% c("chrX")]
+keepY <- featureNames(gm.set) %in% ann450k$Name[ann450k$chr %in% c("chrY")]
+
+probe.names.x <- rownames(gm.set[keepX,])
+probe.names.y <- rownames(gm.set[keepY,])
+
+print("save probes on X,Y")
+save(probe.names.x,probe.names.y, file="probes_XY.Rdata")
+
+remove.probe<-unique(c(failed.probes,probe.names.x,probe.names.y))
+save(remove.probe, file="remove_probes.Rdata")
+```
+
+### 4. Normalization 
+
+```R
+## probes filtering
+
+MSet.raw <- preprocessRaw(filtered_RG.set)
+r.probes <- which(rownames(MSet.raw) %in% remove.probe)
+MSet.rp <- MSet.raw[-r.probes,]
+
+## dasen normalization (P pacakge wateRmelon)
+bn.dasen <- dasen(MSet.rp)
+save("dasen_betas.RData")
+
+## can also choose other normalization methods, such as "Funnorm", "ssNoob", "Quantile" from minfi package
+
+```
+
+### 5. estimate cell counts
+
+```R
+counts <- estimateCellCounts(RG.set,compositeCellType="Blood", cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Eos","Neu"), meanPlot = FALSE)
+
+```
 
 
