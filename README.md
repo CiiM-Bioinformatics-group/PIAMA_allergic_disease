@@ -1,4 +1,4 @@
-# PIAMA_allergic_disease
+## PIAMA_allergic_disease
 Rationale: Epigenetic signatures in the nasal epithelium, which is a primary
 interface with the environment and an accessible proxy for the bronchial
 epithelium, might provide insights into mechanisms of allergic disease. We aimed
@@ -7,7 +7,7 @@ associated with rhinitis and asthma.
 
 Cancan Qi, email: tracyqican@gmail.com
 
-The scripts include:
+# The scripts include:
 
 S1. EWAS of asthma, rhinitis and allergic disease;
 
@@ -27,7 +27,7 @@ S8. IgE stratified analysis.
 
 S9. Other test
 
-Plots include:
+# Plots include:
 
 P1. Manhattan plot and QQ plot of 3 phenotypes;
 
@@ -37,7 +37,7 @@ P3. Venn diagram of 3 phenotypes;
 
 P4. Ohter useful plots.
 
-Data management
+# Data management
 
 D1 phenotype of allergic disease
 
