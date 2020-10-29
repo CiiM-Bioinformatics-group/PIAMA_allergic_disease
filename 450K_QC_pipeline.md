@@ -67,7 +67,7 @@ dev.off()
 
 ### 2. Filter samples
 
-#### 2.1. Check Gender Concordance
+*#### 2.1. Check Gender Concordance
 ```R
 ## get gset
 ratioSet <- ratioConvert(MSet.raw, what = "both", keepCN = TRUE)
@@ -95,7 +95,7 @@ dev.off()
 
 ```
 
-#### 2.2. Identify bad quality samples
+*#### 2.2. Identify bad quality samples
 
 ```R
 #get p values of positions
@@ -117,7 +117,7 @@ write.csv(fail.detp, file="failed_samples_by_probe_frequency.csv")
 
 ```
 
-#### 2.3. Remove bad quality samples and sex mismatch samples
+*#### 2.3. Remove bad quality samples and sex mismatch samples
 
 ```R
 ## remove all failed samples from RGset
