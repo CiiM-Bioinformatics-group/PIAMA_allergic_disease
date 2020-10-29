@@ -155,4 +155,6 @@ man$SNP<-as.character(man$SNP)
 man$CHR<-as.integer(man$CHR)
 
 
+manhattan(man,suggestiveline = fdr,genomewideline = F,col = c("blue4", "orange3"),highlight=snpsOfInterest)
+
 ```
