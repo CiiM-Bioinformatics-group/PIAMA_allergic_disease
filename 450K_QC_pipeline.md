@@ -1,6 +1,8 @@
 # Quality Control of 450K DNA methylation data
 
-Reference: http://bioconductor.org/packages/release/bioc/vignettes/minfi/inst/doc/minfi.html
+Reference: <br>
+http://bioconductor.org/packages/release/bioc/vignettes/minfi/inst/doc/minfi.html <br>
+https://www.bioconductor.org/packages/release/bioc/vignettes/wateRmelon/inst/doc/wateRmelon.pdf <br>
 
 ## Preparation
 
