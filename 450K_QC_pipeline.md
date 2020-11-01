@@ -3,6 +3,7 @@
 Reference: <br>
 http://bioconductor.org/packages/release/bioc/vignettes/minfi/inst/doc/minfi.html <br>
 https://www.bioconductor.org/packages/release/bioc/vignettes/wateRmelon/inst/doc/wateRmelon.pdf <br>
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3592906/ <br>
 
 ## Preparation
 
