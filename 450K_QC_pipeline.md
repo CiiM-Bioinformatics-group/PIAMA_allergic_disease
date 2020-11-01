@@ -192,7 +192,7 @@ MSet.rp <- MSet.raw[-r.probes,]
 
 ## dasen normalization (P pacakge wateRmelon)
 bn.dasen <- dasen(MSet.rp)
-save("dasen_betas.RData")
+save(bn.dasen,"dasen_betas.RData")
 
 ## can also choose other normalization methods, such as "Funnorm", "ssNoob", "Quantile" from minfi package
 
