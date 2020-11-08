@@ -211,16 +211,13 @@ m.set.sq <- preprocessQuantile(filtered_RG.set)
 m.set.flt <- m.set.sq[!(rownames(m.set.sq) %in% remove.probe),]
 save(m.set.flt, file=”xxx")
 
-## get M value
-M.val <- getM(m.set.flt) 
-## get beta value
-B.val <- getBeta(m.set.flt) 
-save(...)
+## get M value and beta value
+M.val <- getM(m.set.flt)
+B.val <- getBeta(m.set.flt)
 
-## DMSplot
+## dmsplot
 phenoData <- pData(filtered_RG.set)
-mdsPlot(B.val, numPositions = 1000, sampGroups = phenoData$status,sampNames = phenoData$Sample.Name)
-
+mdsPlot(beta, numPositions = 1000, sampGroups = phenoData$status,sampNames = phenoData$Sample.Name)
 ```
 
 ### 5. estimate cell counts
