@@ -213,6 +213,7 @@ M.val <- getM(m.set.flt) ## get M value
 B.val <- getBeta(m.set.flt) ## get beta value
 
 ## MDSplot
+phenoData <- pData(filtered_RG.set)
 mdsPlot(B.val, numPositions = 1000, sampGroups = phenoData$status,sampNames = phenoData$Sample.Name)
 
 ```
