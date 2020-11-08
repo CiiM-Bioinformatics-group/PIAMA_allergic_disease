@@ -176,6 +176,9 @@ save(failed.probes,file="failed_probes.Rdata")
 * 3.4 Remove probes on X and Y chr
 
 ```R
+## load annotation
+ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+
 print("get probes on X,Y")
 keepX <- featureNames(gm.set) %in% ann450k$Name[ann450k$chr %in% c("chrX")]
 keepY <- featureNames(gm.set) %in% ann450k$Name[ann450k$chr %in% c("chrY")]
