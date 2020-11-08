@@ -202,13 +202,15 @@ MSet.rp <- MSet.raw[-r.probes,]
 ## dasen normalization (P pacakge wateRmelon)
 bn.dasen <- dasen(MSet.rp)
 save(bn.dasen,"dasen_betas.RData")
+```
 
+```R
 ## can also choose other normalization methods, such as "Funnorm", "ssNoob", "Quantile" from minfi package
 ## for example Quantile normalization
 m.set.sq <- preprocessQuantile(filtered_RG.set)
 m.set.flt <- m.set.sq[!(rownames(m.set.sq) %in% remove.probe),]
-
 save(m.set.flt, file=”xxx")
+
 ## get M value
 M.val <- getM(m.set.flt) 
 ## get beta value
