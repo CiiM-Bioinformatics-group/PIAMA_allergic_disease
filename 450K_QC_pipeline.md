@@ -137,6 +137,10 @@ save(filtered_RG.set,file="filename")
 * 3.1 Filter on detection P values
 
 ```R
+m.set <- preprocessRaw(filtered_RG.set)
+ratioSet <- ratioConvert(m.set, what = "both", keepCN = TRUE)
+gm.set <- mapToGenome(ratioSet)
+
 det.p <- detectionP(filtered_RG.set)
 bad.probes <- rowMeans(det.p > 0.01) > 0.1
 table(bad.probes)
@@ -157,8 +161,10 @@ bad.probe.names.cr <- as.character(nonspec$TargetID[which((nonspec$bm50 + nonspe
 * 3.3 Drop probes with SNP at interrogation or extension site
 
 ```R
-gset.nosnp <- dropLociWithSnps(gset, snps = c("CpG", "SBE"), maf = 0.05)
-all.probes <- rownames(gset)
+## get gset
+
+gset.nosnp <- dropLociWithSnps(gm.set, snps = c("CpG", "SBE"), maf = 0.05)
+all.probes <- rownames(gm.set)
 nosnp.probes <- rownames(gset.nosnp)
 bad.probe.names.pm <- all.probes[!(all.probes %in% nosnp.probes)]
 
