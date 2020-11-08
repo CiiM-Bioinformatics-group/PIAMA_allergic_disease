@@ -217,7 +217,7 @@ B.val <- getBeta(m.set.flt)
 
 ## dmsplot
 phenoData <- pData(filtered_RG.set)
-mdsPlot(beta, numPositions = 1000, sampGroups = phenoData$status,sampNames = phenoData$Sample.Name)
+mdsPlot(B.val, numPositions = 1000, sampGroups = phenoData$status,sampNames = phenoData$Sample.Name)
 ```
 
 ### 5. estimate cell counts
