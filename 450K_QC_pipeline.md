@@ -157,8 +157,8 @@ bad.probe.names.cr <- as.character(nonspec$TargetID[which((nonspec$bm50 + nonspe
 * 3.3 Drop probes with SNP at interrogation or extension site
 
 ```R
-gset.nosnp <- dropLociWithSnps(gm.set, snps = c("CpG", "SBE"), maf = 0.05)
-all.probes <- rownames(gm.set)
+gset.nosnp <- dropLociWithSnps(gset, snps = c("CpG", "SBE"), maf = 0.05)
+all.probes <- rownames(gset)
 nosnp.probes <- rownames(gset.nosnp)
 bad.probe.names.pm <- all.probes[!(all.probes %in% nosnp.probes)]
 
