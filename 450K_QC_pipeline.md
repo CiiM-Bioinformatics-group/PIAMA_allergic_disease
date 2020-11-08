@@ -209,8 +209,11 @@ m.set.sq <- preprocessQuantile(filtered_RG.set)
 m.set.flt <- m.set.sq[!(rownames(m.set.sq) %in% remove.probe),]
 
 save(m.set.flt, file=”xxx")
-M.val <- getM(m.set.flt) ## get M value
-B.val <- getBeta(m.set.flt) ## get beta value
+## get M value
+M.val <- getM(m.set.flt) 
+## get beta value
+B.val <- getBeta(m.set.flt) 
+save(...)
 
 ## DMSplot
 phenoData <- pData(filtered_RG.set)
